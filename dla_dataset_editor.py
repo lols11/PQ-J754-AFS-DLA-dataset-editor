@@ -11,7 +11,7 @@ from xml.parsers import expat
 
 
 TITLE = "DLA Dataset Editor"
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 FREE_TEXT = "FREE FOR ALL."
 AUTHOR_TEXT = f"BY LOLS11   v{VERSION}"
 SUPPORT_TEXT = "If you want to support me or check out my work"
@@ -36,8 +36,8 @@ FIELDS = (
     (0x20A, "Curve detection gain axis start (0%)"),
     (0x20C, "Curve detection gain axis full (100%)"),
 )
-# Suggested raw values (0.01 km/h) for DLA from 10 km/h; fields not listed keep their current value.
-SUGGESTED = {0x368: 1000, 0x36A: 700, 0x36C: 500, 0x3B8: 1000, 0x20A: 1000, 0x20C: 2000}
+# Suggested raw values (0.01 km/h) for DLA from 30 km/h; fields not listed keep their current value.
+SUGGESTED = {0x368: 3000, 0x36A: 2700, 0x36C: 2500, 0x3B8: 3000, 0x20A: 3000, 0x20C: 4000}
 CURVE_AXIS = (0x20A, 0x20C, 0x20E)
 DTC_LIST_OFFSET = 0x468
 DTC_LIST_FORMAT = "<5H"
@@ -312,9 +312,22 @@ def run_gui(args):
     def apply_suggested():
         if dataset is None:
             return
+        suggested = SUGGESTED.copy()
+        start, full, fixed = CURVE_AXIS
+        fixed_speed = struct.unpack_from("<h", dataset.payload, fixed)[0]
+        if fixed_speed < 2:
+            del suggested[start], suggested[full]
+        elif fixed_speed <= suggested[full]:
+            span = suggested[full] - suggested[start]
+            suggested[full] = fixed_speed - 1
+            suggested[start] = max(0, suggested[full] - span)
         for (offset, _), entry in zip(FIELDS, entries):
-            entry.set(speed_text(SUGGESTED[offset]) if offset in SUGGESTED else "")
-        status.set("Suggested settings entered (DLA from 10 km/h). Review them, then use Save As…")
+            entry.set(speed_text(suggested[offset]) if offset in suggested else "")
+        activation = speed_text(suggested[0x368])
+        status.set(
+            f"Suggested settings entered (DLA activation threshold {activation} km/h). "
+            "Review them, then use Save As…"
+        )
 
     ttk.Label(frame, textvariable=source_text, wraplength=390).grid(row=0, column=0, sticky="w")
     ttk.Button(frame, text="Open XML…", command=browse).grid(row=0, column=1, columnspan=2, sticky="e")
