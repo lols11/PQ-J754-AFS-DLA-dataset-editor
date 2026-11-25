@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT OR Beerware
 """Edit DLA speed thresholds and cornering light DTCs in J745 dataset XML files."""
 
 import argparse
@@ -11,11 +12,43 @@ from xml.parsers import expat
 
 
 TITLE = "DLA Dataset Editor"
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 FREE_TEXT = "FREE FOR ALL."
 AUTHOR_TEXT = f"BY LOLS11   v{VERSION}"
 SUPPORT_TEXT = "If you want to support me or check out my work"
 SUPPORT_URL = "https://linktr.ee/lols11"
+LICENSE_TEXT = """DLA Dataset Editor is available under either license below, at your option.
+
+MIT License
+
+Copyright (c) 2026 lols11
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+"THE BEER-WARE LICENSE" (Revision 42)
+
+lols11 wrote this software. As long as you retain this notice, you can
+do whatever you want with this software. If we meet some day and you
+think this software is worth it, you can buy me a beer in return.
+
+lols11
+"""
 CLI_BANNER = (
     f"{TITLE.upper()} | VW PQ AFS / DLA\n"
     f"{FREE_TEXT} {AUTHOR_TEXT}\n"
@@ -241,6 +274,7 @@ def run_cli(args):
 def run_gui(args):
     import tkinter as tk
     from tkinter import filedialog, font, messagebox, ttk
+    from tkinter.scrolledtext import ScrolledText
 
     root = tk.Tk()
     root.title(TITLE)
@@ -364,7 +398,8 @@ def run_gui(args):
     save_button = ttk.Button(frame, text="Save As…", command=save_as, state="disabled")
     save_button.grid(row=next_row + 2, column=2, sticky="e")
     footer = ttk.Frame(frame)
-    footer.grid(row=next_row + 3, column=0, columnspan=3, sticky="w", pady=(12, 0))
+    footer.grid(row=next_row + 3, column=0, columnspan=3, sticky="ew", pady=(12, 0))
+    footer.columnconfigure(2, weight=1)
     default_font = font.nametofont("TkDefaultFont")
     free_font = default_font.copy()
     size = int(default_font.cget("size"))
@@ -383,6 +418,21 @@ def run_gui(args):
     def open_support(_event):
         webbrowser.open(SUPPORT_URL)
 
+    def show_licenses():
+        dialog = tk.Toplevel(root)
+        dialog.title("Licenses")
+        dialog.transient(root)
+        text = ScrolledText(dialog, width=76, height=23, wrap="word", padx=8, pady=8)
+        text.insert("1.0", LICENSE_TEXT)
+        text.configure(state="disabled")
+        text.pack(fill="both", expand=True, padx=8, pady=8)
+        close_button = ttk.Button(dialog, text="Close", command=dialog.destroy)
+        close_button.pack(pady=(0, 8))
+        dialog.bind("<Escape>", lambda _event: dialog.destroy())
+        dialog.grab_set()
+        close_button.focus_set()
+
+    ttk.Button(footer, text="Licenses…", command=show_licenses).grid(row=1, column=2, sticky="e", padx=(8, 0))
     for event in ("<Button-1>", "<Return>", "<space>"):
         support_link.bind(event, open_support)
     if args.xml:
@@ -413,7 +463,8 @@ def ensure_text_console():
 def main():
     argv = sys.argv[1:]
     options = argv[:argv.index("--")] if "--" in argv else argv
-    opened_console = bool({"-nogui", "--nogui", "-h", "--help"}.intersection(options)) and ensure_text_console()
+    text_options = {"-nogui", "--nogui", "-h", "--help", "--license"}
+    opened_console = bool(text_options.intersection(options)) and ensure_text_console()
     parser = argparse.ArgumentParser(
         description=__doc__, epilog=CLI_BANNER, allow_abbrev=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -422,6 +473,7 @@ def main():
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--gui", dest="gui", action="store_true", help="open the desktop editor")
     modes.add_argument("-nogui", "--nogui", dest="gui", action="store_false", help="use the text interface")
+    parser.add_argument("--license", action="store_true", help="print the MIT and Beerware license texts")
     parser.set_defaults(gui=bool(getattr(sys, "frozen", False)))
     parser.add_argument("-o", "--output", type=Path, help="output path in text mode or suggested path in the GUI")
     parser.add_argument(
@@ -430,7 +482,9 @@ def main():
     )
     try:
         args = parser.parse_args(argv)
-        if args.gui:
+        if args.license:
+            print(LICENSE_TEXT, end="")
+        elif args.gui:
             if args.cornering_dtc:
                 parser.error("--cornering-dtc is available in text mode. In the GUI, use the DTC checkboxes.")
             run_gui(args)

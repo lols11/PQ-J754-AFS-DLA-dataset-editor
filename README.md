@@ -77,4 +77,10 @@ The executable is in `dist`. Python and the EXE use the same editor code.
 
 **FREE FOR ALL. BY LOLS11.** [Support me or check out my work](https://linktr.ee/lols11)
 
-[MIT License](LICENSE)
+## Licenses
+
+You can use DLA Dataset Editor under the [MIT License](LICENSE) or the
+[Beerware License, Revision 42](LICENSE-BEERWARE), at your option.
+
+Select **Licenses…** in the desktop editor to read the full texts. Pass
+`--license` to the Python script or Windows EXE to print both notices.
