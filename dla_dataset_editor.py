@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: MIT OR Beerware
+# SPDX-License-Identifier: MIT AND Beerware
 """Edit DLA speed thresholds and cornering light DTCs in J745 dataset XML files."""
 
 import argparse
@@ -12,12 +12,12 @@ from xml.parsers import expat
 
 
 TITLE = "DLA Dataset Editor"
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 FREE_TEXT = "FREE FOR ALL."
 AUTHOR_TEXT = f"BY LOLS11   v{VERSION}"
 SUPPORT_TEXT = "If you want to support me or check out my work"
 SUPPORT_URL = "https://linktr.ee/lols11"
-LICENSE_TEXT = """DLA Dataset Editor is available under either license below, at your option.
+LICENSE_TEXT = """DLA Dataset Editor is licensed under both licenses below. Both sets of terms apply.
 
 MIT License
 
@@ -274,7 +274,6 @@ def run_cli(args):
 def run_gui(args):
     import tkinter as tk
     from tkinter import filedialog, font, messagebox, ttk
-    from tkinter.scrolledtext import ScrolledText
 
     root = tk.Tk()
     root.title(TITLE)
@@ -398,8 +397,7 @@ def run_gui(args):
     save_button = ttk.Button(frame, text="Save As…", command=save_as, state="disabled")
     save_button.grid(row=next_row + 2, column=2, sticky="e")
     footer = ttk.Frame(frame)
-    footer.grid(row=next_row + 3, column=0, columnspan=3, sticky="ew", pady=(12, 0))
-    footer.columnconfigure(2, weight=1)
+    footer.grid(row=next_row + 3, column=0, columnspan=3, sticky="w", pady=(12, 0))
     default_font = font.nametofont("TkDefaultFont")
     free_font = default_font.copy()
     size = int(default_font.cget("size"))
@@ -414,25 +412,13 @@ def run_gui(args):
         footer, text=SUPPORT_TEXT, foreground="#005a9c", font=link_font, cursor="hand2", takefocus=True,
     )
     support_link.grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 0))
+    ttk.Label(footer, text="© 2026 lols11 · MIT AND Beerware").grid(
+        row=2, column=0, columnspan=2, sticky="w", pady=(4, 0),
+    )
 
     def open_support(_event):
         webbrowser.open(SUPPORT_URL)
 
-    def show_licenses():
-        dialog = tk.Toplevel(root)
-        dialog.title("Licenses")
-        dialog.transient(root)
-        text = ScrolledText(dialog, width=76, height=23, wrap="word", padx=8, pady=8)
-        text.insert("1.0", LICENSE_TEXT)
-        text.configure(state="disabled")
-        text.pack(fill="both", expand=True, padx=8, pady=8)
-        close_button = ttk.Button(dialog, text="Close", command=dialog.destroy)
-        close_button.pack(pady=(0, 8))
-        dialog.bind("<Escape>", lambda _event: dialog.destroy())
-        dialog.grab_set()
-        close_button.focus_set()
-
-    ttk.Button(footer, text="Licenses…", command=show_licenses).grid(row=1, column=2, sticky="e", padx=(8, 0))
     for event in ("<Button-1>", "<Return>", "<space>"):
         support_link.bind(event, open_support)
     if args.xml:
